@@ -108,7 +108,7 @@ Select only one of the two BadIP blocks according to the installed build. Remove
 36 * * * * run_cmd('download http://dxspider.dxcluster.net/download/badip.curated')
 40 * * * * run_cmd('load/badip')
 
-# AutoUpdate BadIP (only if build >= 935)
+# AutoUpdate BadIP (only if build > 935)
 33 * * * * run_cmd('download http://dxspider.dxcluster.net/download/badip*')
 40 * * * * run_cmd('load/badip')
 
