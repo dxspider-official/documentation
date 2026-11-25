@@ -107,7 +107,7 @@ Seleccione únicamente uno de los dos bloques BadIP según la build instalada. E
 36 * * * * run_cmd('download http://dxspider.dxcluster.net/download/badip.curated')
 40 * * * * run_cmd('load/badip')
 
-# AutoUpdate BadIP (only if build >= 935)
+# AutoUpdate BadIP (only if build > 935)
 33 * * * * run_cmd('download http://dxspider.dxcluster.net/download/badip*')
 40 * * * * run_cmd('load/badip')
 
