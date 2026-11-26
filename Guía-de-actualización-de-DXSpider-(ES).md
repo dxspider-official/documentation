@@ -53,6 +53,8 @@ Si alguna instalación o comprobación falla, no continúe hasta resolverla.
 
 ### 2. Configurar la base de datos de usuarios
 
+**Importante:** Para builds superiores a 900, DB_File deja de estar soportado como backend de la base de datos de usuarios. Es obligatorio migrar a SQLite. Esta migración es un requisito indispensable para el correcto funcionamiento de DXSpider.
+
 Identifique el usuario propietario y la ruta real:
 
 ```bash
@@ -147,7 +149,19 @@ set/var @main::localhost_names
 
 Conserve el resto del fichero.
 
-### 5. Actualizar a la última build de Mojo
+### 5. Exportar la base de datos de usuarios
+
+Antes de actualizar DXSpider, acceda a la consola del nodo con privilegios de SYSOP y ejecute:
+
+```text
+export_users
+```
+
+Espere a que finalice la exportación y compruebe que se ha generado correctamente. Conserve una copia del fichero exportado en un lugar seguro, fuera del directorio de instalación de DXSpider.
+
+Esta exportación proporciona un mecanismo adicional de recuperación de los datos de usuario y no sustituye a la copia de seguridad completa de la instalación.
+
+### 6. Actualizar a la última build de Mojo
 
 Ejecute Git como propietario de la instalación, no como root (salvo que root sea realmente el usuario de DXSpider). Sitúese en el directorio de DXSpider, no en el directorio personal:
 
@@ -178,7 +192,7 @@ Si ambos fallan, no continúe. Después de una descarga correcta:
 git log -1 --oneline FETCH_HEAD
 ```
 
-Antes de sustituir el código, detenga el nodo como se indica en el apartado 6 y haga una copia completa de la instalación con el nodo parado, fuera del árbol de DXSpider. Compruebe que dispone de espacio suficiente y que la copia incluye los datos y la configuración local.
+Antes de sustituir el código, detenga el nodo como se indica en el apartado 7 y haga una copia completa de la instalación con el nodo parado, fuera del árbol de DXSpider. Compruebe que dispone de espacio suficiente y que la copia incluye los datos y la configuración local.
 
 **ATENCIÓN:** los siguientes comandos descartan cambios locales en los archivos versionados y sustituyen la rama local `mojo` por la revisión descargada. No utilice `git clean`, ya que podría eliminar archivos locales necesarios. Si tiene configuración o datos locales versionados, consérvelos en la copia y revise su restauración antes de arrancar.
 
@@ -197,9 +211,9 @@ git status --short
 
 La rama debe ser `mojo`. No continúe si Git devuelve un error. Los archivos versionados deben corresponder a la revisión descargada; los archivos locales no versionados se conservan salvo los que impidan escribir archivos versionados. Compruebe que las modificaciones de los apartados 2, 3 y 4 siguen presentes.
 
-### 6. Reiniciar y verificar el nodo
+### 7. Reiniciar y verificar el nodo
 
-#### Detener el nodo (antes de aplicar el cambio de código del apartado 5)
+#### Detener el nodo (antes de aplicar el cambio de código del apartado 6)
 
 Si DXSpider funciona como servicio systemd, desde una cuenta con permisos de administrador:
 
@@ -249,7 +263,7 @@ Acceda a la consola y compruebe la versión y build con `show/version`.
 
 ## Método 2. Actualización automática
 
-Como alternativa al método manual, realice únicamente los apartados 3 y 4 anteriores y utilice el actualizador de EA3CV, que instala dependencias, prepara una copia de seguridad y actualiza a la rama `mojo`, intentando primero el repositorio de Dirk y después GitHub.
+Como alternativa al método manual, realice los apartados 3, 4 y 5 anteriores y utilice el actualizador de EA3CV, que instala dependencias, prepara una copia de seguridad y actualiza a la rama `mojo`, intentando primero el repositorio de Dirk y después GitHub.
 
 Repositorio: https://github.com/EA3CV/dxspider_info
 
