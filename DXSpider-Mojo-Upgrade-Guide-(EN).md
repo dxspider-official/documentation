@@ -1,15 +1,14 @@
+# Guía de actualización de DXSpider a la última build de Mojo
 
-# DXSpider Upgrade Guide to the Latest Mojo Build
+Esta guía está destinada a SYSOPs que ya disponen de una instalación de DXSpider. Se puede realizar la actualización manualmente o utilizar el script automático.
 
-This guide is intended for SYSOPs who already have a DXSpider installation. You can upgrade manually or use the automatic update script.
+Los ejemplos usan `/spider` como ruta de acceso a la instalación y `sysop` como usuario habitual. Compruebe siempre los valores reales de su equipo.
 
-The examples use `/spider` as the installation path and `sysop` as the usual user account. Always check the actual values on your system.
+## Método 1. Actualización manual
 
-## Method 1. Manual upgrade
+### 1. Instalar los paquetes necesarios
 
-### 1. Install the required packages
-
-On Debian, Ubuntu, Raspberry Pi OS and derived distributions, log in as an administrator:
+En Debian, Ubuntu, Raspberry Pi OS y distribuciones derivadas, acceda como administrador:
 
 ```bash
 sudo -i
@@ -17,7 +16,7 @@ apt-get update
 apt-get install perl git rsync curl iproute2 gzip procps build-essential cpanminus libssl-dev zlib1g-dev
 ```
 
-Install the available Perl packages. The following loop allows you to continue if a package is unavailable in your distribution (run it in Bash):
+Instale los paquetes Perl disponibles. El siguiente bucle permite continuar si algún paquete no existe en su distribución (ejecútelo en bash):
 
 ```bash
 for pkg in libtimedate-perl libnet-telnet-perl libcurses-perl libdigest-sha-perl \
@@ -27,11 +26,11 @@ for pkg in libtimedate-perl libnet-telnet-perl libcurses-perl libdigest-sha-perl
     libhtml-parser-perl libio-socket-inet6-perl libarchive-zip-perl \
     libmailtools-perl libwww-perl libio-pty-perl libauthen-sasl-perl \
     libnet-smtp-ssl-perl libemail-sender-perl; do
-    apt-get install -y "$pkg" || echo "Check package: $pkg"
+    apt-get install -y "$pkg" || echo "Revisar paquete: $pkg"
 done
 ```
 
-If a module is unavailable through APT, use `cpanm`. This block checks all modules required by the updater and installs only those that are missing:
+Si algún módulo no está disponible mediante APT, utilice `cpanm`. Este bloque comprueba todos los módulos requeridos por el actualizador e instala únicamente los que faltan:
 
 ```bash
 for module in EV Mojolicious JSON JSON::XS Data::Structure::Util Math::Round \
@@ -43,25 +42,25 @@ for module in EV Mojolicious JSON JSON::XS Data::Structure::Util Math::Round \
 done
 ```
 
-Make sure you have Perl 5.16.1 or later and Mojolicious 7.26 or later:
+Compruebe que dispone de Perl 5.16.1 o posterior y Mojolicious 7.26 o posterior:
 
 ```bash
-perl -e 'die "Perl version is too old\n" if $] < 5.016001'
+perl -e 'die "Perl demasiado antiguo\n" if $] < 5.016001'
 perl -MMojolicious -e 'Mojolicious->VERSION(7.26)'
 ```
 
-If any installation or check fails, do not proceed until the issue has been resolved.
+Si alguna instalación o comprobación falla, no continúe hasta resolverla.
 
-### 2. Configure the user database
+### 2. Configurar la base de datos de usuarios
 
-Identify the owner account and the actual installation path:
+Identifique el usuario propietario y la ruta real:
 
 ```bash
 readlink -f /spider
 stat -c '%U:%G' /spider/perl/cluster.pl
 ```
 
-Switch to the user account that runs DXSpider (usually `sysop`; replace the name if different):
+Cambie al usuario que ejecuta DXSpider (normalmente `sysop`; sustituya el nombre si es diferente):
 
 ```bash
 su - sysop
@@ -70,23 +69,23 @@ pwd -P
 nano /spider/local/DXVars.pm
 ```
 
-Add the following line before the final `1;`, only if `$userdsn` is not already defined:
+Añada la siguiente línea antes del `1;` final, únicamente si `$userdsn` no está ya definido:
 
 ```perl
 our $userdsn = "dbi:SQLite:dbname=$root/local_data/dxusers.db";
 ```
 
-Save the file. Do not remove the final `1;` or duplicate the variable.
+Guarde el fichero. No elimine el `1;` final ni duplique la variable.
 
-### 3. Update scheduled tasks
+### 3. Actualizar las tareas programadas
 
 ```bash
 nano /spider/local_cmd/crontab
 ```
 
-Replace the equivalent existing tasks with the following, where applicable. Do not duplicate tasks or remove other node-specific tasks, such as connections to other clusters.
+Sustituya las tareas equivalentes existentes por las siguientes, cuando proceda. No duplique tareas ni elimine otras tareas propias del nodo, como las conexiones a otros clústeres.
 
-Select only one of the two BadIP blocks according to the installed build. Remove or comment out the other block. For a static public IP, the `set/external_ip` scheduled task is optional.
+Seleccione únicamente uno de los dos bloques BadIP según la build instalada. Elimine o comente el otro bloque. Si dispone de una IP pública estática, la tarea programada `set/external_ip` es opcional.
 
 ```perl
 # Update dynamic public IP
@@ -131,13 +130,13 @@ Select only one of the two BadIP blocks according to the installed build. Remove
 9 3 * * * run_cmd("load/prefix")
 ```
 
-### 4. Update the startup file
+### 4. Actualizar el fichero startup
 
 ```bash
 nano /spider/scripts/startup
 ```
 
-Remove any lines beginning with the following expressions, regardless of their assigned values:
+Elimine, si existen, las líneas que comiencen por las siguientes expresiones, independientemente del valor que tengan asignado:
 
 ```text
 set/var $main::maxconnect_user
@@ -146,11 +145,11 @@ set/var $main::localhost_alias_ipv6
 set/var @main::localhost_names
 ```
 
-Keep the rest of the file unchanged.
+Conserve el resto del fichero.
 
-### 5. Upgrade to the latest Mojo build
+### 5. Actualizar a la última build de Mojo
 
-Run Git as the installation owner, not as root (unless root is actually the DXSpider user). Change to the DXSpider directory, not the user's home directory:
+Ejecute Git como propietario de la instalación, no como root (salvo que root sea realmente el usuario de DXSpider). Sitúese en el directorio de DXSpider, no en el directorio personal:
 
 ```bash
 cd /spider
@@ -159,36 +158,36 @@ git rev-parse --show-toplevel
 git remote -v
 ```
 
-Check that the repository root matches the actual installation. If it is not a Git repository, use the automatic method.
+Compruebe que la raíz del repositorio coincide con la instalación real. Si no es un repositorio Git, utilice el método automático.
 
-Fetch the `mojo` branch from Dirk's official repository:
+Descargue la rama `mojo` del repositorio oficial de Dirk:
 
 ```bash
 git fetch git://scm.dxcluster.org/spider refs/heads/mojo
 ```
 
-**Only if this fails**, use the alternative repository:
+**Solo si falla**, utilice el repositorio alternativo:
 
 ```bash
 git fetch https://github.com/EA3CV/dxspider.git refs/heads/mojo
 ```
 
-If both fail, do not proceed. After a successful fetch:
+Si ambos fallan, no continúe. Después de una descarga correcta:
 
 ```bash
 git log -1 --oneline FETCH_HEAD
 ```
 
-Before replacing the code, stop the node as described in section 6 and make a complete backup of the installation while the node is stopped, outside the DXSpider directory tree. Make sure there is sufficient disk space and that the backup includes local data and configuration.
+Antes de sustituir el código, detenga el nodo como se indica en el apartado 6 y haga una copia completa de la instalación con el nodo parado, fuera del árbol de DXSpider. Compruebe que dispone de espacio suficiente y que la copia incluye los datos y la configuración local.
 
-**WARNING:** the following commands discard local changes to tracked files and replace the local `mojo` branch with the fetched revision. Do not use `git clean`, as it could remove required local files. If local configuration or data files are tracked, preserve them in the backup and review their restoration before starting the node.
+**ATENCIÓN:** los siguientes comandos descartan cambios locales en los archivos versionados y sustituyen la rama local `mojo` por la revisión descargada. No utilice `git clean`, ya que podría eliminar archivos locales necesarios. Si tiene configuración o datos locales versionados, consérvelos en la copia y revise su restauración antes de arrancar.
 
 ```bash
 cd /spider
 git reset --hard FETCH_HEAD && git checkout -f -B mojo FETCH_HEAD
 ```
 
-Verify the result:
+Verifique el resultado:
 
 ```bash
 git branch --show-current
@@ -196,73 +195,73 @@ git log -1 --oneline
 git status --short
 ```
 
-The branch must be `mojo`. Do not proceed if Git reports an error. Tracked files must match the fetched revision; untracked local files are preserved except those that prevent tracked files from being written. Check that the changes made in sections 2, 3 and 4 are still present.
+La rama debe ser `mojo`. No continúe si Git devuelve un error. Los archivos versionados deben corresponder a la revisión descargada; los archivos locales no versionados se conservan salvo los que impidan escribir archivos versionados. Compruebe que las modificaciones de los apartados 2, 3 y 4 siguen presentes.
 
-### 6. Restart and verify the node
+### 6. Reiniciar y verificar el nodo
 
-#### Stop the node (before applying the code changes in section 5)
+#### Detener el nodo (antes de aplicar el cambio de código del apartado 5)
 
-If DXSpider runs as a systemd service, use an account with administrator privileges:
+Si DXSpider funciona como servicio systemd, desde una cuenta con permisos de administrador:
 
 ```bash
 sudo systemctl stop dxspider.service
 sudo systemctl status dxspider.service
 ```
 
-If DXSpider runs manually, access the DXSpider console with SYSOP privileges and execute:
+Si funciona manualmente, entre en la consola de DXSpider con privilegios de SYSOP y ejecute:
 
 ```text
 shut
 ```
 
-Do not confuse `shut` with a Linux shell command. Make sure the node has stopped before continuing.
+No confunda `shut` con un comando del shell de Linux. Compruebe que el nodo se ha detenido antes de continuar.
 
-#### Check manual startup
+#### Comprobar el arranque manual
 
-Once the upgrade is complete, run the following as the DXSpider user:
+Una vez actualizado, ejecute como usuario de DXSpider:
 
 ```bash
 cd /spider/perl
 /spider/perl/cluster.pl
 ```
 
-Watch the startup messages. If errors appear, resolve them before starting the service. If startup is successful, open another terminal, access the console (usually `/spider/perl/console.pl`) and execute `shut` to stop the test process.
+Observe los mensajes de arranque. Si aparecen errores, resuélvalos antes de iniciar el servicio. Si el arranque es correcto, abra otra terminal, acceda a la consola (habitualmente `/spider/perl/console.pl`) y ejecute `shut` para detener el proceso de prueba.
 
-#### Final startup
+#### Arranque definitivo
 
-If you use systemd, run the following from an account with administrator privileges:
+Si utiliza systemd, desde una cuenta con permisos administrativos:
 
 ```bash
 sudo systemctl start dxspider.service
 sudo systemctl status dxspider.service
 ```
 
-You can also use `sudo service dxspider start` if your installation supports that command.
+También puede utilizar `sudo service dxspider start` si su instalación admite ese comando.
 
-If you start DXSpider manually, run the following as the DXSpider user:
+Si utiliza el arranque manual, como usuario de DXSpider:
 
 ```bash
 cd /spider/perl
 /spider/perl/cluster.pl
 ```
 
-Access the console and check the version and build using `show/version`.
+Acceda a la consola y compruebe la versión y build con `show/version`.
 
-## Method 2. Automatic upgrade
+## Método 2. Actualización automática
 
-As an alternative to the manual method, complete only sections 3 and 4 above and use the EA3CV updater, which installs dependencies, prepares a backup and upgrades to the `mojo` branch, trying Dirk's repository first and then GitHub.
+Como alternativa al método manual, realice únicamente los apartados 3 y 4 anteriores y utilice el actualizador de EA3CV, que instala dependencias, prepara una copia de seguridad y actualiza a la rama `mojo`, intentando primero el repositorio de Dirk y después GitHub.
 
-Repository: https://github.com/EA3CV/dxspider_info
+Repositorio: https://github.com/EA3CV/dxspider_info
 
-Before running it, determine the actual installation path:
+Antes de ejecutarlo, averigüe la ruta real de la instalación:
 
 ```bash
 readlink -f /spider
 ```
 
-If the node runs manually, stop it using `shut` from the console. If it uses systemd and is running, the updater handles stopping it.
+Si el nodo funciona manualmente, deténgalo mediante `shut` desde la consola. Si utiliza systemd y está activo, el actualizador gestiona su parada.
 
-Log in as root and download DXSpider Manager into a new working directory:
+Acceda como root y descargue DXSpider Manager en un directorio de trabajo nuevo:
 
 ```bash
 sudo -i
@@ -275,8 +274,8 @@ chmod a+x dxspider-manager.pl
 ./dxspider-manager.pl
 ```
 
-If the working directory already exists, use a different name to avoid mixing old downloads. If you are already root, omit `sudo -i`.
+Si el directorio de trabajo ya existe, utilice otro nombre para evitar mezclar descargas antiguas. Si ya es root, omita `sudo -i`.
 
-When the script asks for the DXSpider installation directory, enter the actual path obtained earlier (for example `/home/sysop/spider`). Do not enter `/home/sysop` or the directory where you downloaded the updater.
+Cuando el script solicite el directorio de instalación de DXSpider, introduzca la ruta real obtenida anteriormente (por ejemplo `/home/sysop/spider`). No indique `/home/sysop` ni el directorio donde ha descargado el actualizador.
 
-Select the upgrade option for an existing installation and follow the on-screen instructions. Once finished, check that the node starts correctly and verify its version. Do not select a fresh installation.
+Seleccione la opción de actualización de una instalación existente y siga las instrucciones que aparecen en pantalla. Al finalizar, compruebe el arranque del nodo y su versión. No seleccione una instalación nueva.
